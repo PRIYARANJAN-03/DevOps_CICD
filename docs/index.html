@@ -1,133 +1,636 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Test Food Blog</title>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Karma">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CalcX — Calculator & Tic Tac Toe</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
 <style>
-body,h1,h2,h3,h4,h5,h6 {font-family: "Karma", sans-serif}
-.w3-bar-block .w3-bar-item {padding:20px}
+  :root {
+    --bg: #0e0e11;
+    --surface: #17171c;
+    --surface2: #1f1f27;
+    --surface3: #2a2a36;
+    --accent: #c8f135;
+    --accent2: #7c6af7;
+    --accent3: #f77c6a;
+    --text: #f0efea;
+    --muted: #7a7a8a;
+    --border: #2e2e3e;
+    --shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 16px 48px;
+  }
+  /* Header */
+  header {
+    width: 100%;
+    max-width: 900px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0 32px;
+  }
+  .logo {
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: -1px;
+  }
+  .logo span { color: var(--accent); }
+  .tab-bar {
+    display: flex;
+    gap: 6px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 5px;
+  }
+  .tab-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px 18px;
+    border-radius: 8px;
+    color: var(--muted);
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+  .tab-btn.active {
+    background: var(--accent);
+    color: #0e0e11;
+  }
+  .tab-btn:hover:not(.active) { color: var(--text); background: var(--surface2); }
+
+  /* Panels */
+  .panel { display: none; width: 100%; max-width: 420px; }
+  .panel.active { display: block; }
+
+  /* ===== CALCULATOR ===== */
+  .calculator {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+  .display {
+    background: var(--surface2);
+    padding: 24px 24px 16px;
+    text-align: right;
+    border-bottom: 1px solid var(--border);
+  }
+  .expr {
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    color: var(--muted);
+    min-height: 20px;
+    margin-bottom: 8px;
+    word-break: break-all;
+  }
+  .result {
+    font-family: 'Space Mono', monospace;
+    font-size: 42px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1;
+    word-break: break-all;
+    transition: color 0.15s;
+  }
+  .result.evaluated { color: var(--accent); }
+
+  .calc-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    padding: 18px;
+  }
+  .btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: 18px;
+    font-weight: 700;
+    border-radius: 14px;
+    padding: 18px 0;
+    cursor: pointer;
+    transition: all 0.12s;
+    user-select: none;
+    position: relative;
+    overflow: hidden;
+  }
+  .btn:hover { background: var(--surface3); border-color: #3e3e55; transform: translateY(-1px); }
+  .btn:active { transform: scale(0.94) translateY(0); }
+  .btn.op { background: var(--surface3); color: var(--accent2); }
+  .btn.op:hover { background: #2f2f45; }
+  .btn.eq {
+    background: var(--accent);
+    color: #0e0e11;
+    border-color: var(--accent);
+  }
+  .btn.eq:hover { background: #d4ff45; }
+  .btn.ac { color: var(--accent3); }
+  .btn.zero { grid-column: span 2; }
+  .btn.ripple::after {
+    content: '';
+    position: absolute;
+    width: 120%;
+    height: 120%;
+    background: rgba(255,255,255,0.08);
+    border-radius: 50%;
+    top: -10%;
+    left: -10%;
+    animation: rip 0.3s ease-out;
+    pointer-events: none;
+  }
+  @keyframes rip { from{opacity:1;transform:scale(0.3)} to{opacity:0;transform:scale(1)} }
+
+  /* History */
+  .history-bar {
+    border-top: 1px solid var(--border);
+    padding: 12px 18px;
+    max-height: 80px;
+    overflow-y: auto;
+  }
+  .history-bar::-webkit-scrollbar { width: 4px; }
+  .history-bar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  .hist-item {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.8;
+  }
+  .hist-item span { color: var(--accent); margin-left: 6px; }
+
+  /* ===== TIC TAC TOE ===== */
+  #ttt-panel {
+    max-width: 460px;
+  }
+  .ttt-wrapper {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+  .ttt-header {
+    padding: 20px 24px 16px;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .ttt-title { font-size: 18px; font-weight: 800; }
+  .score-board {
+    display: flex;
+    gap: 12px;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+  }
+  .score-x { color: var(--accent); }
+  .score-o { color: var(--accent2); }
+  .score-d { color: var(--muted); }
+
+  .status-bar {
+    padding: 10px 24px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .status-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent);
+    transition: background 0.3s;
+  }
+  .status-bar.turn-o .status-dot { background: var(--accent2); }
+  .status-bar.win-x { color: var(--accent); }
+  .status-bar.win-o { color: var(--accent2); }
+  .status-bar.draw { color: var(--accent3); }
+
+  .board {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    padding: 18px;
+  }
+  .cell {
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Space Mono', monospace;
+    font-size: 36px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .cell:hover:not(.taken) { background: var(--surface3); border-color: #3e3e55; }
+  .cell.x { color: var(--accent); }
+  .cell.o { color: var(--accent2); }
+  .cell.win-cell {
+    background: var(--surface3);
+    border-color: var(--accent);
+    animation: pulse 0.5s ease-out;
+  }
+  .cell.win-cell.o-win { border-color: var(--accent2); }
+  .cell.taken { cursor: default; }
+  @keyframes pulse {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+  }
+
+  .ttt-footer {
+    padding: 14px 18px 18px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 10px;
+  }
+  .ttt-btn {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 10px 0;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .ttt-btn:hover { background: var(--surface3); }
+  .ttt-btn.primary {
+    background: var(--accent);
+    color: #0e0e11;
+    border-color: var(--accent);
+  }
+  .ttt-btn.primary:hover { background: #d4ff45; }
+
+  /* Mode selector */
+  .mode-select {
+    display: flex;
+    gap: 6px;
+    padding: 12px 18px 0;
+  }
+  .mode-btn {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'Syne', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 7px 0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .mode-btn.active {
+    background: var(--accent2);
+    color: #fff;
+    border-color: var(--accent2);
+  }
+  .mode-btn:hover:not(.active) { color: var(--text); }
+
+  /* Responsive */
+  @media (max-width: 480px) {
+    header { flex-direction: column; gap: 16px; padding-bottom: 24px; }
+    .result { font-size: 34px; }
+    .btn { font-size: 16px; padding: 15px 0; }
+    .cell { font-size: 28px; }
+  }
 </style>
 </head>
 <body>
 
-<!-- Sidebar (hidden by default) -->
-<nav class="w3-sidebar w3-bar-block w3-card w3-top w3-xlarge w3-animate-left" style="display:none;z-index:2;width:40%;min-width:300px" id="mySidebar">
-  <a href="javascript:void(0)" onclick="w3_close()"
-  class="w3-bar-item w3-button">Close Menu</a>
-  <a href="#food" onclick="w3_close()" class="w3-bar-item w3-button">Food</a>
-  <a href="#about" onclick="w3_close()" class="w3-bar-item w3-button">About</a>
-</nav>
+<header>
+  <div class="logo">Calc<span>X</span></div>
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('calc')">Calculator</button>
+    <button class="tab-btn" onclick="switchTab('ttt')">Tic Tac Toe</button>
+  </div>
+</header>
 
-<!-- Top menu -->
-<div class="w3-top">
-  <div class="w3-white w3-xlarge" style="max-width:1200px;margin:auto">
-    <div class="w3-button w3-padding-16 w3-left" onclick="w3_open()">☰</div>
-    <div class="w3-right w3-padding-16">Mail</div>
-    <div class="w3-center w3-padding-16">My Food</div>
+<!-- CALCULATOR -->
+<div class="panel active" id="calc-panel">
+  <div class="calculator">
+    <div class="display">
+      <div class="expr" id="expr"></div>
+      <div class="result" id="result">0</div>
+    </div>
+    <div class="calc-grid">
+      <button class="btn ac" onclick="calcAC()">AC</button>
+      <button class="btn op" onclick="calcOp('±')">±</button>
+      <button class="btn op" onclick="calcOp('%')">%</button>
+      <button class="btn op" onclick="calcOp('÷')">÷</button>
+
+      <button class="btn" onclick="calcNum('7')">7</button>
+      <button class="btn" onclick="calcNum('8')">8</button>
+      <button class="btn" onclick="calcNum('9')">9</button>
+      <button class="btn op" onclick="calcOp('×')">×</button>
+
+      <button class="btn" onclick="calcNum('4')">4</button>
+      <button class="btn" onclick="calcNum('5')">5</button>
+      <button class="btn" onclick="calcNum('6')">6</button>
+      <button class="btn op" onclick="calcOp('−')">−</button>
+
+      <button class="btn" onclick="calcNum('1')">1</button>
+      <button class="btn" onclick="calcNum('2')">2</button>
+      <button class="btn" onclick="calcNum('3')">3</button>
+      <button class="btn op" onclick="calcOp('+')">+</button>
+
+      <button class="btn zero" onclick="calcNum('0')">0</button>
+      <button class="btn" onclick="calcDot()">.</button>
+      <button class="btn eq" onclick="calcEq()">=</button>
+    </div>
+    <div class="history-bar" id="history"></div>
   </div>
 </div>
-  
-<!-- !PAGE CONTENT! -->
-<div class="w3-main w3-content w3-padding" style="max-width:1200px;margin-top:100px">
 
-  <!-- First Photo Grid-->
-  <div class="w3-row-padding w3-padding-16 w3-center" id="food">
-    <div class="w3-quarter">
-      <img src="https://vaya.in/recipes/wp-content/uploads/2018/06/Club-sandwich.jpg" alt="Sandwich" style="width:100%">
-      <h3>The Perfect Sandwich, A Real NYC Classic</h3>
+<!-- TIC TAC TOE -->
+<div class="panel" id="ttt-panel">
+  <div class="ttt-wrapper">
+    <div class="ttt-header">
+      <div class="ttt-title">Tic Tac Toe</div>
+      <div class="score-board">
+        <span class="score-x">X: <b id="sx">0</b></span>
+        <span class="score-d">D: <b id="sd">0</b></span>
+        <span class="score-o">O: <b id="so">0</b></span>
+      </div>
     </div>
-    <div class="w3-quarter">
-      <img src="https://arc-anglerfish-washpost-prod-washpost.s3.amazonaws.com/public/53BGPNAB6YI63C7LFNHEQGYVAA.jpg" alt="Steak" style="width:100%">
-      <h3>Let Me Tell You About This Steak</h3>
+    <div class="mode-select">
+      <button class="mode-btn active" id="pvp-btn" onclick="setMode('pvp')">2 Players</button>
+      <button class="mode-btn" id="ai-btn" onclick="setMode('ai')">vs AI</button>
     </div>
-    <div class="w3-quarter">
-      <img src="https://blog.lexmed.com/images/librariesprovider80/blog-post-featured-images/shutterstock_1933299218.jpg?sfvrsn=4a8d900b_0" alt="Cherries" style="width:100%">
-      <h3>Cherries, interrupted</h3>
-      <p>What else?</p>
+    <div class="status-bar" id="status">
+      <div class="status-dot"></div>
+      <span id="status-text">X's turn</span>
     </div>
-    <div class="w3-quarter">
-      <img src="https://www.acouplecooks.com/wp-content/uploads/2023/01/Red-Sauce-Pasta-008.jpg" alt="Pasta and Wine" style="width:100%">
-      <h3>Once Again, Robust Wine and Vegetable Pasta</h3>
+    <div class="board" id="board"></div>
+    <div class="ttt-footer">
+      <button class="ttt-btn" onclick="resetScores()">Reset Scores</button>
+      <button class="ttt-btn primary" onclick="newGame()">New Game</button>
     </div>
   </div>
-  
-  <!-- Second Photo Grid-->
-  <div class="w3-row-padding w3-padding-16 w3-center">
-    <div class="w3-quarter">
-      <img src="https://feelgoodfoodie.net/wp-content/uploads/2022/04/How-to-Make-Popsicles-15.jpg" alt="Popsicle" style="width:100%">
-      <h3>All I Need Is a Popsicle</h3>
-    </div>
-    <div class="w3-quarter">
-      <img src="https://www.wholesomeyum.com/wp-content/uploads/2021/07/wholesomeyum-Pan-Seared-Salmon-12.jpg" alt="Salmon" style="width:100%">
-      <h3>Salmon For Your Skin</h3>
-    </div>
-    <div class="w3-quarter">
-      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/Desserts.jpg/640px-Desserts.jpg" alt="Sandwich" style="width:100%">
-      <h3>The Perfect Dessert</h3>
-    </div>
-    <div class="w3-quarter">
-      <img src="https://www.simplejoy.com/wp-content/uploads/2021/04/Croissant-French-Toast-5.jpg" alt="Croissant" style="width:100%">
-      <h3>Le French</h3>
-    </div>
-  </div>
-
-  <!-- Pagination -->
-  <div class="w3-center w3-padding-32">
-    <div class="w3-bar">
-      <a href="#" class="w3-bar-item w3-button w3-hover-black">«</a>
-      <a href="#" class="w3-bar-item w3-black w3-button">1</a>
-      <a href="#" class="w3-bar-item w3-button w3-hover-black">2</a>
-      <a href="#" class="w3-bar-item w3-button w3-hover-black">3</a>
-      <a href="#" class="w3-bar-item w3-button w3-hover-black">4</a>
-      <a href="#" class="w3-bar-item w3-button w3-hover-black">»</a>
-    </div>
-  </div>
-  
-  <hr id="about">
-
-  <!-- About Section -->
-  <div class="w3-container w3-padding-32 w3-center">  
-    <h3>About Me, The Food Man</h3><br>
-    <img src="https://www.cordonbleu.edu/Files/MediaFile/58300.jpg" alt="Me" class="w3-image" style="display:block;margin:auto" width="800" height="533">
-    <div class="w3-padding-32">
-      <h4><b>I am Who I Am!</b></h4>
-      <h6><i>With Passion For Real, Good Food</i></h6>
-      <p>Just me, myself and I, exploring the universe of unknownment. I have a heart of love and an interest on food blog. I want to share my world with you.</p>
-    </div>
-  </div>
-  <hr>
-  
-  <!-- Footer -->
-  <footer class="w3-row-padding w3-padding-32">
-
-    <div class="w3-third w3-serif">
-      <h3>POPULAR TAGS</h3>
-      <p>
-        <span class="w3-tag w3-black w3-margin-bottom">Travel</span> <span class="w3-tag w3-dark-grey w3-small w3-margin-bottom">New York</span> <span class="w3-tag w3-dark-grey w3-small w3-margin-bottom">Dinner</span>
-        <span class="w3-tag w3-dark-grey w3-small w3-margin-bottom">Salmon</span> <span class="w3-tag w3-dark-grey w3-small w3-margin-bottom">France</span> <span class="w3-tag w3-dark-grey w3-small w3-margin-bottom">Drinks</span>
-        <span class="w3-tag w3-dark-grey w3-small w3-margin-bottom">Ideas</span> <span class="w3-tag w3-dark-grey w3-small w3-margin-bottom">Flavors</span> <span class="w3-tag w3-dark-grey w3-small w3-margin-bottom">Cuisine</span>
-        <span class="w3-tag w3-dark-grey w3-small w3-margin-bottom">Chicken</span> <span class="w3-tag w3-dark-grey w3-small w3-margin-bottom">Dressing</span> <span class="w3-tag w3-dark-grey w3-small w3-margin-bottom">Fried</span>
-        <span class="w3-tag w3-dark-grey w3-small w3-margin-bottom">Fish</span> <span class="w3-tag w3-dark-grey w3-small w3-margin-bottom">Duck</span>
-      </p>
-    </div>
-  </footer>
-
-<!-- End page content -->
 </div>
 
 <script>
-// Script to open and close sidebar
-function w3_open() {
-  document.getElementById("mySidebar").style.display = "block";
+// ===== TAB LOGIC =====
+function switchTab(tab) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(tab === 'calc' ? 'calc-panel' : 'ttt-panel').classList.add('active');
+  event.target.classList.add('active');
 }
- 
-function w3_close() {
-  document.getElementById("mySidebar").style.display = "none";
-}
-</script>
 
+// ===== CALCULATOR =====
+let current = '0', prev = '', operator = '', justEvaled = false, history = [];
+
+function updateDisplay(flash) {
+  const r = document.getElementById('result');
+  r.textContent = current;
+  r.classList.toggle('evaluated', !!flash);
+  document.getElementById('expr').textContent = prev && operator ? prev + ' ' + operator : '';
+}
+
+function calcNum(n) {
+  if (justEvaled) { current = n; justEvaled = false; }
+  else current = current === '0' ? n : current + n;
+  if (current.length > 14) current = current.slice(0, 14);
+  updateDisplay(false);
+  ripple(event.target);
+}
+
+function calcDot() {
+  if (justEvaled) { current = '0.'; justEvaled = false; }
+  else if (!current.includes('.')) current += '.';
+  updateDisplay(false);
+  ripple(event.target);
+}
+
+function calcOp(op) {
+  if (op === '±') { current = (parseFloat(current) * -1).toString(); updateDisplay(false); return; }
+  if (op === '%') { current = (parseFloat(current) / 100).toString(); updateDisplay(false); return; }
+  if (prev && operator && !justEvaled) calcEq(true);
+  prev = current; operator = op; justEvaled = false;
+  updateDisplay(false);
+  ripple(event.target);
+}
+
+function calcEq(silent) {
+  if (!prev || !operator) return;
+  const a = parseFloat(prev), b = parseFloat(current);
+  let res;
+  if (operator === '+') res = a + b;
+  else if (operator === '−') res = a - b;
+  else if (operator === '×') res = a * b;
+  else if (operator === '÷') res = b === 0 ? 'Error' : a / b;
+  const expr = prev + ' ' + operator + ' ' + current;
+  res = res !== 'Error' ? parseFloat(res.toFixed(10)).toString() : res;
+  if (!silent) {
+    addHistory(expr, res);
+    document.getElementById('expr').textContent = expr + ' =';
+  }
+  current = res; prev = ''; operator = ''; justEvaled = true;
+  updateDisplay(true);
+  if (!silent) ripple(event.target);
+}
+
+function calcAC() {
+  current = '0'; prev = ''; operator = ''; justEvaled = false;
+  updateDisplay(false);
+  ripple(event.target);
+}
+
+function addHistory(expr, res) {
+  history.unshift(expr + ' = ' + res);
+  if (history.length > 5) history.pop();
+  const bar = document.getElementById('history');
+  bar.innerHTML = history.map(h => {
+    const parts = h.split('=');
+    return `<div class="hist-item">${parts[0]}=<span>${parts[1]}</span></div>`;
+  }).join('');
+}
+
+function ripple(el) {
+  el.classList.remove('ripple');
+  void el.offsetWidth;
+  el.classList.add('ripple');
+  setTimeout(() => el.classList.remove('ripple'), 350);
+}
+
+// Keyboard support
+document.addEventListener('keydown', e => {
+  if (document.getElementById('calc-panel').classList.contains('active')) {
+    if (e.key >= '0' && e.key <= '9') calcNum(e.key);
+    else if (e.key === '.') calcDot();
+    else if (e.key === '+') calcOp('+');
+    else if (e.key === '-') calcOp('−');
+    else if (e.key === '*') calcOp('×');
+    else if (e.key === '/') { e.preventDefault(); calcOp('÷'); }
+    else if (e.key === 'Enter' || e.key === '=') calcEq();
+    else if (e.key === 'Escape' || e.key === 'c') calcAC();
+    else if (e.key === 'Backspace') {
+      if (justEvaled) return;
+      current = current.length > 1 ? current.slice(0, -1) : '0';
+      updateDisplay(false);
+    }
+  }
+});
+
+// ===== TIC TAC TOE =====
+let board = Array(9).fill(''), xTurn = true, gameOver = false;
+let scores = { X: 0, O: 0, D: 0 }, mode = 'pvp';
+const wins = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+
+function setMode(m) {
+  mode = m;
+  document.getElementById('pvp-btn').classList.toggle('active', m === 'pvp');
+  document.getElementById('ai-btn').classList.toggle('active', m === 'ai');
+  newGame();
+}
+
+function renderBoard() {
+  const el = document.getElementById('board');
+  el.innerHTML = board.map((v, i) =>
+    `<div class="cell${v ? ' taken ' + v.toLowerCase() : ''}" onclick="cellClick(${i})">${v}</div>`
+  ).join('');
+}
+
+function setStatus(msg, cls) {
+  const s = document.getElementById('status');
+  s.className = 'status-bar ' + (cls || '');
+  document.getElementById('status-text').textContent = msg;
+}
+
+function cellClick(i) {
+  if (board[i] || gameOver) return;
+  board[i] = xTurn ? 'X' : 'O';
+  renderBoard();
+  const winner = checkWinner();
+  if (winner) {
+    highlightWin(winner.combo, winner.player === 'O');
+    scores[winner.player]++;
+    updateScores();
+    setStatus(winner.player + ' wins! 🎉', 'win-' + winner.player.toLowerCase());
+    gameOver = true;
+    return;
+  }
+  if (board.every(c => c)) {
+    setStatus("It's a draw!", 'draw');
+    scores.D++;
+    updateScores();
+    gameOver = true;
+    return;
+  }
+  xTurn = !xTurn;
+  setStatus(xTurn ? "X's turn" : "O's turn", xTurn ? '' : 'turn-o');
+  if (mode === 'ai' && !xTurn) setTimeout(aiMove, 380);
+}
+
+function checkWinner() {
+  for (const [a,b,c] of wins) {
+    if (board[a] && board[a] === board[b] && board[b] === board[c])
+      return { player: board[a], combo: [a,b,c] };
+  }
+  return null;
+}
+
+function highlightWin(combo, isO) {
+  const cells = document.getElementById('board').children;
+  combo.forEach(i => {
+    cells[i].classList.add('win-cell');
+    if (isO) cells[i].classList.add('o-win');
+  });
+}
+
+function aiMove() {
+  const best = minimax(board, false);
+  board[best.index] = 'O';
+  renderBoard();
+  const winner = checkWinner();
+  if (winner) {
+    highlightWin(winner.combo, winner.player === 'O');
+    scores[winner.player]++;
+    updateScores();
+    setStatus(winner.player + ' wins! 🤖', 'win-' + winner.player.toLowerCase());
+    gameOver = true;
+    return;
+  }
+  if (board.every(c => c)) {
+    setStatus("It's a draw!", 'draw');
+    scores.D++;
+    updateScores();
+    gameOver = true;
+    return;
+  }
+  xTurn = true;
+  setStatus("X's turn", '');
+}
+
+function minimax(b, isMax, depth = 0) {
+  const w = (() => {
+    for (const [a,bb,c] of wins) {
+      if (b[a] && b[a] === b[bb] && b[bb] === b[c]) return b[a];
+    }
+    return null;
+  })();
+  if (w === 'O') return { score: 10 - depth };
+  if (w === 'X') return { score: depth - 10 };
+  const empty = b.map((v,i) => v ? null : i).filter(i => i !== null);
+  if (!empty.length) return { score: 0 };
+  const moves = empty.map(i => {
+    const nb = [...b];
+    nb[i] = isMax ? 'O' : 'X';
+    return { index: i, score: minimax(nb, !isMax, depth + 1).score };
+  });
+  return moves.reduce((best, m) =>
+    isMax ? (m.score > best.score ? m : best) : (m.score < best.score ? m : best)
+  );
+}
+
+function updateScores() {
+  document.getElementById('sx').textContent = scores.X;
+  document.getElementById('so').textContent = scores.O;
+  document.getElementById('sd').textContent = scores.D;
+}
+
+function newGame() {
+  board = Array(9).fill('');
+  xTurn = true;
+  gameOver = false;
+  renderBoard();
+  setStatus("X's turn", '');
+}
+
+function resetScores() {
+  scores = { X: 0, O: 0, D: 0 };
+  updateScores();
+  newGame();
+}
+
+// Init
+updateDisplay(false);
+renderBoard();
+</script>
 </body>
 </html>
